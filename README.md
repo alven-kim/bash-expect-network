@@ -1,8 +1,8 @@
-bash expect - running-config
-============================
+network config using bash expect
+================================
 
 ## Concept
- - 네트워크 장비의 running-config & output log 저장
+ - 네트워크 장비들의 설정과 output에 대한 log 저장
  - SSH Terminal 접근 시, Timeout Feedback output
  - bash expect install
 
@@ -12,8 +12,8 @@ bash expect - running-config
 
 ## 참고사항
  - 모든 장비의 ID/PW 동일해야 함
- - 10초 이상 미응답 시, timeout되며, timeout은 stdout으로 구현하였으므로 로그파일을 통해 확인 가능
- - 필요시에는 stdout 제거하여 표준 출력 확인. ( 1>/dev/null )
+ - 10초 이상 미응답 시, timeout
+ - 필요시에는 stdout redirection 설정하여 표준 출력 제거. ( 1>/dev/null )
 
 ## 사용방법
 
@@ -31,12 +31,12 @@ Example1) ./network-any-config.sh switch_list.txt 'show system'
 Example2) ./network-any-config.sh switch_list.txt 'show running-config'
 Example3) ./network-any-config.sh switch_list.txt 'show arp'
 ```
- - filename : 여기선 switch_list.txt 파일을 사용하였으며, 필요한 장비의 IP 입력.
  - 로그파일 : 현재 경로에 hostname.log로 기록되며, append하지 않음.
+ - filename : 여기선 switch_list.txt 파일을 사용하였으며, 필요한 장비의 Hostname(or IP) 입력.
  - 객체형 설정의 경우 적용되지 않음. (one-line commands만 적용됨)
 
 ## TODO
- - timeout과 ID/PW 오입력에 대한 stderr를 구현 예정(현재는 stdout으로 모두 redirection되므로 로그 파일을 통해 확인 가능)
+ - timeout과 ID/PW 오입력에 대한 stderr를 구현 가능한지 리서치
 
 ## See Also
  - man bash

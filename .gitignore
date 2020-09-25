@@ -1,0 +1,9 @@
+# Except this file
+!.gitignore
+
+# rrd include company
+*.bak
+*.old
+*.sh
+*.txt
+*.log

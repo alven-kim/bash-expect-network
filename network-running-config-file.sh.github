@@ -1,0 +1,66 @@
+#!/usr/bin/env bash
+
+
+FILE=("$1")
+CLI=("$2")
+if [[ -z $1 || -z $2 || -z $@ ]]; then
+        echo -e "########## Failed --- Please Check Example ##########\nExample ./script.sh [filename] [command] "
+        exit 1
+elif [ $1 = "-h" -o $1 = "-help" -o $1 = "help" ]; then
+        echo -e "Usage: ./script.sh [filename] [command] ...\n"
+        echo -e "\t -h\t\t help."
+        echo -e "\t example\t ./script.sh [filename] [your switch command]"
+        exit 0
+fi
+
+echo -e "## START Script(Background Running AND File use) ----- $0 ##\n"
+echo -n -e "Your Insert Filename and Commands ########## $1 $2 ##########\n"
+echo -n -e "Your Check OK? (y=continue/n=stop): "
+read yesno
+
+max=10
+subsh=0
+
+if [ $yesno = "y" ]
+then
+	echo -n -e "login your ID: "
+	read -e CID
+	echo -n -e "login your password(Key-hidden): "
+	read -s CPW
+
+  while read HOST
+  do
+	(
+	( expect <<-EOF
+	set timeout 10
+	spawn ssh $CID@$HOST -oStrictHostKeyChecking=no
+	sleep 1
+  log_file -noappend $HOST.log
+	expect {
+		"*word*" { send "$CPW\r" }
+		timeout { send_user "ConnectionTimeout Exceeded - $HOST Failed.\n"; exit 1 }
+#		eof { send_user "SSH Connection Timeout Exceeded - $HOST Failed.\n"; exit 1 }
+#		failed { send_user "Invalid password or account\n"; exit 1 }
+	}
+	expect "*#" { send "$CLI\r" }
+	expect -nocase "more" { send " "; exp_continue }
+	expect eof
+	EOF
+	) 1>/dev/null
+  ) &
+    (( subsh++ ))
+    if [ $subsh -ge $max ]
+    then
+    wait
+    (( subsh = 0 ))
+    fi
+
+	done < $1
+
+
+else
+	echo "STOP"
+fi
+
+
+

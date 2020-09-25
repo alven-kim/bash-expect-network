@@ -1,0 +1,68 @@
+#!/usr/bin/env bash
+
+ARG=("$@")
+if [ -z $1 ]; then
+        echo -e "########## Failed --- Please Your Insert Hostname\nExample ./script.sh 1.1.1.1 2.2.2.2 ....."
+        exit 1
+elif [ $1 = "-h" -o $1 = "-help" -o $1 = "help" ]; then
+        echo -e "Usage: ./script.sh [hostname1] [hostname2] ...\n"
+        echo -e "\t -h\t\t help."
+        echo -e "\t example\t ./script.sh 1.1.1.1 2.2.2.2 3.3.3.3 ....."
+        exit 0
+fi
+
+echo -e "########## START Script(Background Running AND IP Argument Insert) ----- $0"
+
+echo -n -e "Your Insert IP Address ########## $@ ##########\n"
+echo -n -e "Your Check IP Address OK? (y=continue/n=stop): "
+read yesno
+
+subsh=0
+max=10
+
+if [ $yesno = "y" ]
+then
+        echo -n -e "login your ID: "
+        read -e CID
+        echo -n -e "login your password(key-hidden): "
+        read -s CPW
+        echo "\n"
+
+
+        for sw in ${ARG[@]}
+        do
+
+                ( expect <<-EOF
+                set timeout 10
+                spawn ssh $CID@$sw -oStrictHostKeyChecking=no
+                log_file -noappend $sw.log
+                expect {
+                        "*word*" { send "$CPW\r" }
+                        timeout { send_user "ConnectionTimeout Exceeded - $sw Failed.\n"; exit 1 }
+        #               eof { send_user "SSH Connection Timeout Exceeded - $sw Failed.\n"; exit 1 }
+        #               failed { send_user "Invalid password or account\n"; exit 1 }
+                }
+                expect -nocase "*>" { send "enable\r" }
+                expect -nocase "*word*" { send "test123!@#\r" }
+                send "config terminal\r"
+                expect -nocase "*config*" { send "username test password test123!@#\r" }
+                sleep 0.5
+                send "end\r"
+                expect -nocase "*#" { send "write memory\r" }
+                sleep 0.5
+                send "exit\r"
+                sleep 0.5
+                send "exit\r"
+                expect eof
+                EOF
+                ) &
+                        (( subsh++ ))
+                        if [ $subsh -ge $max ]; then
+                        wait
+                        (( subsh = 0 ))
+                        fi
+        done
+else
+        echo "STOP"
+fi
+
